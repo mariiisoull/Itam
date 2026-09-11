@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учет техники | ITAM Дашборд</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bs-body-bg: #f8fafc;
+            --bs-body-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            --card-radius: 14px;
+        }
+
+        body {
+            background-color: var(--bs-body-bg);
+            color: #334155;
+        }
+
+        /* Навигация */
+        .navbar-custom {
+            background-color: #0f172a;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        /* KPI Карточки */
+        .kpi-card {
+            border: 1px solid #e2e8f0;
+            border-radius: var(--card-radius);
+            background: #ffffff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        /* Цвет темы для KPI */
+        .kpi-primary .kpi-icon { background: #eff6ff; color: #2563eb; }
+        .kpi-success .kpi-icon { background: #f0fdf4; color: #16a34a; }
+        .kpi-warning .kpi-icon { background: #fffbeb; color: #d97706; }
+        .kpi-info .kpi-icon { background: #f5f3ff; color: #7c3aed; }
+
+        /* Контейнеры графиков и списков */
+        .content-card {
+            border: 1px solid #e2e8f0;
+            border-radius: var(--card-radius);
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        /* Список перемещений */
+        .history-item {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 12px 0;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .cabinet-badge {
+            font-family: monospace;
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Навигационная панель -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#">
+            <i class="bi bi-box-seam-fill text-primary"></i>
+            <span>ITAM <span class="fw-normal text-muted fs-6">Management</span></span>
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/equipment/" class="btn btn-outline-light btn-sm px-3 rounded-2">
+                <i class="bi bi-cpu me-1"></i> Реестр техники
+            </a>
+            <a href="/admin/" class="btn btn-primary btn-sm px-3 rounded-2">
+                <i class="bi bi-shield-lock me-1"></i> Вход в Админку
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Главный контейнер -->
+<div class="container my-5">
+    
+    <!-- Шапка страницы -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-slate-800 mb-1">Панель управления и Аналитика</h3>
+        <p class="text-muted small mb-0">Текущий статус ИТ-активов и операционная история перемещений</p>
+    </div>
+
+    <!-- Карточки со статистикой -->
+    <div class="row g-3 mb-4">
+        <!-- Всего -->
+        <div class="col-6 col-md-3">
+            <div class="card kpi-card kpi-primary p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium">Всего техники</span>
+                    <div class="kpi-icon"><i class="bi bi-pc-display"></i></div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">{{ total_count|default:0 }}</div>
+            </div>
+        </div>
+
+        <!-- Новая -->
+        <div class="col-6 col-md-3">
+            <div class="card kpi-card kpi-success p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium">Новая (&le; 3 лет)</span>
+                    <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">{{ new_count|default:0 }}</div>
+            </div>
+        </div>
+
+        <!-- Старая -->
+        <div class="col-6 col-md-3">
+            <div class="card kpi-card kpi-warning p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium">Старая (&gt; 3 лет)</span>
+                    <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">{{ old_count|default:0 }}</div>
+            </div>
+        </div>
+
+        <!-- Кабинетов -->
+        <div class="col-6 col-md-3">
+            <div class="card kpi-card kpi-info p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium">Кабинетов на учете</span>
+                    <div class="kpi-icon"><i class="bi bi-door-open"></i></div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">{{ cabinets_count|default:0 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- График и Перемещения -->
+    <div class="row g-4">
+        <!-- Диаграмма -->
+        <div class="col-lg-5">
+            <div class="card content-card p-4 h-100">
+                <h6 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-pie-chart text-primary"></i> Соотношение возраста
+                </h6>
+                <div class="d-flex align-items-center justify-content-center flex-grow-1" style="min-height: 240px;">
+                    <div style="width: 100%; max-width: 270px;">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список перемещений -->
+        <div class="col-lg-7">
+            <div class="card content-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-down-up text-primary"></i> Последние перемещения
+                    </h6>
+                    <span class="badge bg-light text-secondary border">Лог</span>
+                </div>
+
+                <div class="history-list">
+                    {% for item in recent_history %}
+                    <div class="history-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold text-dark mb-1">{{ item.equipment.name }}</div>
+                            <div class="small text-muted d-flex align-items-center gap-2">
+                                <span class="cabinet-badge">{{ item.old_cabinet|default:"—" }}</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                <span class="cabinet-badge text-primary bg-primary-subtle">{{ item.new_cabinet|default:"—" }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge bg-light text-muted fw-normal">
+                                <i class="bi bi-clock me-1"></i>{{ item.change_date|date:"d.m.Y H:i" }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-2 d-block mb-2 text-slate-300"></i>
+                        <span>Записей перемещений пока нет</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Безопасный JS-скрипт -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('ageChart').getContext('2d');
+        
+        // Безопасное парсение значений Django (с фоллбэком на 0)
+        const newCount = parseInt("{{ new_count|default:0 }}", 10) || 0;
+        const oldCount = parseInt("{{ old_count|default:0 }}", 10) || 0;
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Новая (до 3 лет)', 'Старая (более 3 лет)'],
+                datasets: [{
+                    data: [newCount, oldCount],
+                    backgroundColor: ['#22c55e', '#f59e0b'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                cutout: '72%'
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
