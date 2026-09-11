@@ -46,7 +46,7 @@ Follow these steps to set up and run the project locally.
 Откройте терминал / командную строку и склонируйте проект:
 
 ```bash
-git clone [https://github.com/ваш-логин/ваш-репозиторий.git](https://github.com/ваш-логин/ваш-репозиторий.git)
+git clone [https://github.com/ваш-логин/ваш-репозиторий.git](https://github.com/mariiisoull/Itam.git)
 cd ваш-репозиторий
 
 
